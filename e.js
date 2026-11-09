@@ -77,7 +77,7 @@ function paint() {
     E.marks.push(pin(map, l.ll, near ? '<span class="lab">' + esc(l.place) + '</span><i></i>' : '<i></i><span class="lab">' + esc(l.place) + '</span>', 'stop' + (on ? ' sel' : '') + (hereNow ? ' here' : ''), () => enterMap(sl && sl.place === l.place ? sl.i : l.i), near ? 'right' : 'left'));
   });
   /* places as small dots for the open stop; photos live only in the stop page */
-  if (E.mode === 'map' && sl) shownPicks(W, t, sl.id).forEach(p => { const m = pin(map, p.ll, '', 'pick', () => showSpot(p)); m.getElement().dataset.pk = p.id; E.marks.push(m); });
+  if (E.mode === 'map' && sl) shownPicks(W, t, sl.id).forEach(p => { const m = pin(map, p.ll, '', 'pick', () => openPlace(p)); m.getElement().dataset.pk = p.id; E.marks.push(m); });
   if (E.me) E.me.remove();
   E.me = new maplibregl.Marker({ element: Object.assign(document.createElement('div'), { className: 'me' }) }).setLngLat(st.ll).addTo(map);
 }
@@ -209,5 +209,27 @@ function renderCard(l) {
   c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); if (E.map) flyTo(E.map, { center: l.ll, zoom: E.map.getZoom(), padding: pads(), duration: 600 }); };
   c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
   $$('[data-ph]', c).forEach(b => { const p = ph[+b.dataset.ph]; photoSrc(p).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(ph, +b.dataset.ph); });
-  $$('[data-pk]', c).forEach(b => b.onclick = () => { const p = pk.find(x => x.id === b.dataset.pk); if (p) showSpot(p); });
+  $$('[data-pk]', c).forEach(b => b.onclick = () => { const p = pk.find(x => x.id === b.dataset.pk); if (p) openPlace(p); });
+}
+/* ---------- a place's own page, inside the stop card ---------- */
+const KIND = { food: 'Food', cafe: 'Coffee', bar: 'Bar', museum: 'Museum', architecture: 'Architecture', walk: 'Walk', garden: 'Garden', photo: 'Photo spot', shop: 'Shop', craft: 'Craft', onsen: 'Hot spring' };
+async function openPlace(p) {
+  const W = E.W, l = W.leg(p.leg) || W.legs[E.sel] || W.legs[0], t = CLOCK.now();
+  if (E.mode !== 'map') await enterMap(l.i);
+  const ph = shownPhotos(W, t, l.id).filter(x => x.place && x.place === p.name);
+  let h = '<header class="phead"><span class="grab dark" data-grab></span><div class="ctop"><button type="button" class="pback" data-back>\u2190 ' + esc(l.place) + '</button><button type="button" class="x dark" data-x aria-label="Hide">\u00d7</button></div>';
+  h += '<h2>' + esc(p.name) + '</h2><p class="meta">' + [p.area, KIND[p.kind]].filter(Boolean).map(esc).join(' \u00b7 ') + '</p></header><div class="body">';
+  if (p.went && p.wentOn) h += '<p class="pwent">Ellen went ' + dayLong(p.wentOn) + '.</p>';
+  if (p.note) h += '<blockquote class="pnote">\u201c' + esc(p.note) + '\u201d</blockquote>';
+  if (p.about) h += '<p class="blurb">' + esc(p.about) + '</p>';
+  if (ph.length) h += '<h3>Photos</h3><div class="prints">' + ph.map((x, j) => '<button type="button" data-ph="' + j + '"><img alt=""><span>' + esc(x.caption || '') + '</span></button>').join('') + '</div>';
+  if (p.hours || p.url) h += '<div class="travel pfacts">' + (p.hours ? '<div class="lg"><div>Hours</div><span>' + esc(p.hours) + '</span></div>' : '') + (p.url ? '<div class="lg"><div>Website</div><span><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '')) + ' \u2197</a></span></div>' : '') + '</div>';
+  h += '</div>';
+  const c = $('#card'); c.hidden = false; c.innerHTML = h; c.scrollTop = 0; c.classList.toggle('tall', E.tall);
+  c.style.animation = 'none'; void c.offsetWidth; c.style.animation = '';
+  c.querySelector('[data-back]').onclick = () => { clearSpot(); renderCard(l); flyTo(E.map, { center: l.ll, zoom: l.place === 'Tokyo' ? 11 : 11.6, pitch: 50, bearing: -12, padding: pads(), duration: 1200 }); };
+  c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); };
+  c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
+  $$('[data-ph]', c).forEach(b => { const x = ph[+b.dataset.ph]; photoSrc(x).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(ph, +b.dataset.ph); });
+  showSpot(p);
 }
