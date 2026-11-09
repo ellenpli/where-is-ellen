@@ -194,7 +194,13 @@ function itineraryHtml(l, t) {
 function renderCard(l) {
   const W = E.W, t = CLOCK.now(), st = W.status(t), today = dayKey(t);
   const here = st.phase === 'stay' && st.leg === l, coming = st.phase === 'moving' && st.move.leg === l;
-  const status = here ? '<span class="status here">Ellen’s here now</span>' : coming ? '<span class="status here">On her way here</span>' : t >= l.t1 ? '<span class="status">Ellen was here</span>' : '<span class="status">Coming up · ' + dayLabel(l.inKey) + '</span>';
+  const tomorrow = addDays(today, 1), arrive = W.moves.find(m => m.leg === l && m.major);
+  const status = here ? '<span class="status here">' + (today === l.outKey ? 'Ellen’s here · leaving today' : 'Ellen’s here now') + '</span>'
+    : coming ? '<span class="status here">On her way here</span>'
+    : t >= l.t1 ? '<span class="status">Ellen was here</span>'
+    : (arrive ? dayKey(arrive.t0) : l.inKey) === today ? '<span class="status">Heading here today</span>'
+    : l.inKey === tomorrow ? '<span class="status">Coming up tomorrow</span>'
+    : '<span class="status">Coming up · ' + dayLabel(l.inKey) + '</span>';
   const days = W.dayLines(l).filter(d => d.lines.length), ph = shownPhotos(W, t, l.id), pk = shownPicks(W, t, l.id);
   let h = '<header class="cover"><span class="grab" data-grab></span><div class="ctop">' + status + '<button type="button" class="x" data-x aria-label="Hide">×</button></div><h2>' + esc(l.place) + '</h2></header><div class="body">';
   h += '<p class="meta">' + esc(l.hotel) + ' · ' + rangeText(l) + ' · ' + nightsText(l) + '</p>';
