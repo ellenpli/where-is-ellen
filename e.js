@@ -71,10 +71,10 @@ function paint() {
   const seen = {};
   W.legs.forEach(l => {
     if (seen[l.place]) return; seen[l.place] = 1;
-    const on = sl ? sl.place === l.place : false;
+    const on = sl ? sl.place === l.place : false, hereNow = st.phase === 'stay' && st.leg && st.leg.place === l.place;
     /* when the next stop sits close by (Miyanoshita and Hakone), this label goes on the left so they don't overlap */
     const near = W.legs.find(o => o.i > l.i && o.place !== l.place && haversine(o.ll, l.ll) < 25);
-    E.marks.push(pin(map, l.ll, near ? '<span class="lab">' + esc(l.place) + '</span><i></i>' : '<i></i><span class="lab">' + esc(l.place) + '</span>', 'stop' + (on ? ' sel' : ''), () => enterMap(sl && sl.place === l.place ? sl.i : l.i), near ? 'right' : 'left'));
+    E.marks.push(pin(map, l.ll, near ? '<span class="lab">' + esc(l.place) + '</span><i></i>' : '<i></i><span class="lab">' + esc(l.place) + '</span>', 'stop' + (on ? ' sel' : '') + (hereNow ? ' here' : ''), () => enterMap(sl && sl.place === l.place ? sl.i : l.i), near ? 'right' : 'left'));
   });
   /* places as small dots for the open stop; photos live only in the stop page */
   if (E.mode === 'map' && sl) shownPicks(W, t, sl.id).forEach(p => { const m = pin(map, p.ll, '', 'pick', () => showSpot(p)); m.getElement().dataset.pk = p.id; E.marks.push(m); });

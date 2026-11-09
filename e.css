@@ -177,3 +177,10 @@ body.mapmode .legend{display:flex}
   .stage .maplibregl-ctrl-top-left{display:none}
   .legend{left:auto;right:10px;bottom:auto;top:58px;gap:10px;font-size:12px;padding:5px 9px}
 }
+/* the passcode screen in the Benesse style: serif, blue, no all-caps */
+.fe #gate h1{color:var(--blue)}
+.fe #gate form{border-bottom:1px solid var(--ink)}
+.fe #gate button{font:17px/1 var(--serif);letter-spacing:0;text-transform:none;color:var(--blue);padding:0 2px}
+.fe #gate input{letter-spacing:.02em}
+/* where she is now: the blue position dot stands in for the stop dot */
+.mk.stop.here i{visibility:hidden}
