@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Where's Ellen?</title><link rel="stylesheet" href="vendor/maplibre-gl.css"><link rel="stylesheet" href="lib/base.css"><link rel="stylesheet" href="e.css"></head>
+<body class="fe">
+<header class="top"><span class="tag">Where’s Ellen?</span><span class="clocks">Tokyo <b id="tyo"></b><i>·</i>New York <b id="nyc"></b></span></header>
+<main class="home" id="home">
+  <section class="answer">
+    <p class="day" id="day"></p>
+    <h1 id="status"></h1>
+    <p class="say" id="say"></p>
+    <p class="next" id="nextrow"><span class="lab">Next</span><span id="nextsay"></span></p>
+  </section>
+  <figure class="latest" id="latest" hidden><button type="button" id="latestbtn" aria-label="Open the latest photo"><img alt=""></button><figcaption id="latestcap"></figcaption></figure>
+  <section class="port" id="port">
+    <div class="slot" id="slot"></div>
+    <button type="button" class="portbtn" id="portbtn" aria-label="Open the map"></button>
+    <p class="portcap"><button type="button" id="portlink">Open the map →</button></p>
+  </section>
+</main>
+<section class="line" id="line" aria-label="The trip, stop by stop"><div class="rail"><i></i><em id="dot"></em></div><ol id="stations"></ol></section>
+<p class="fine" id="fine"></p>
+<div class="stage" id="stage"><div id="map"></div></div>
+<div class="legend" id="legend" aria-hidden="true"><span><i class="lt"></i>Train</span><span><i class="lf"></i>Boat</span><span><i class="lp"></i>Flight</span><span><i class="lc"></i>Car or bus</span></div>
+<nav class="dock" id="dock" hidden aria-label="Stops">
+  <button type="button" class="back" id="back">← Home</button>
+  <button type="button" class="step" id="prev" aria-label="Previous stop">‹</button>
+  <ol class="dstations" id="dstations"></ol>
+  <span class="dnow" id="dnow"></span>
+  <button type="button" class="step" id="next" aria-label="Next stop">›</button>
+  <button type="button" class="playb" id="play">Play</button>
+</nav>
+<aside class="card" id="card" hidden></aside>
+<div id="lightbox" class="lightbox" hidden></div>
+<script src="vendor/maplibre-gl.js"></script><script src="lib/util.js"></script><script src="lib/model.js"></script><script src="lib/map.js"></script><script src="lib/seal.js"></script><script src="lib/follow-ui.js"></script><script src="e.js"></script>
+</body></html>

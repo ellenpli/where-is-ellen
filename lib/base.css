@@ -1,0 +1,22 @@
+/* shared basics for every Follow direction: reset, the passcode gate, the lightbox */
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;height:100%}body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+img{display:block;max-width:100%}
+.maplibregl-ctrl-attrib{font-size:10px;opacity:.6}
+body.locked>*:not(#gate){visibility:hidden}
+#gate{position:fixed;inset:0;display:grid;place-items:center;z-index:99;background:var(--gate-bg,#f3efe6);color:var(--gate-ink,#2a2723);padding:24px}
+#gate .gate-in{max-width:360px;width:100%}
+#gate h1{font:400 34px/1.1 var(--gate-font,"Iowan Old Style",Palatino,Georgia,serif);margin:0 0 12px;letter-spacing:-.01em}
+#gate p{margin:0 0 22px;font:15px/1.45 var(--gate-font,"Iowan Old Style",Palatino,Georgia,serif);opacity:.75}
+#gate form{display:flex;border-bottom:1.5px solid currentColor}
+#gate input{flex:1;font:18px/1 var(--gate-font,"Iowan Old Style",Palatino,Georgia,serif);border:0;background:none;color:inherit;padding:10px 0;outline:none;letter-spacing:.08em}
+#gate button{font:600 12px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:0 4px}
+#gate form.nope{animation:nope .4s}
+@keyframes nope{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.lightbox{position:fixed;inset:0;z-index:60;background:rgba(20,18,16,.86);display:grid;place-items:center;padding:4vh 4vw}
+.lightbox figure{margin:0;max-width:min(1100px,92vw);color:#f3efe6}
+.lightbox img{max-height:78vh;width:auto;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.lightbox figcaption{font:16px/1.4 "Iowan Old Style",Palatino,Georgia,serif;margin-top:14px;text-align:center}
+.lightbox figcaption small{display:block;font:11px/1.6 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-top:4px}
+.lightbox .x{position:absolute;top:14px;right:18px;color:#f3efe6;font:28px/1 system-ui;padding:8px}
+.mk{display:block}
