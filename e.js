@@ -29,9 +29,9 @@ function tick() {
   $('#tyo').textContent = clk(t, TZJ); $('#nyc').textContent = clk(t, TZE);
   $('#day').textContent = dayLong(dayKey(t)) + ', in Japan';
   $('#status').textContent = st.h; $('#say').textContent = st.sub || '';
-  const nm = W.nextMove(t);
+  const nm = W.nextMove(st.phase === 'moving' && st.move ? st.move.t1 : t);
   $('#nextrow').hidden = !nm;
-  if (nm) $('#nextsay').textContent = ({ flight: 'Flight to ', ferry: 'Boat to ', train: 'Train to ' }[nm.main.mode] || 'On to ') + nm.to;
+  if (nm) $('#nextsay').textContent = ({ flight: 'Flight to ', ferry: 'Boat to ', train: 'Train to ' }[nm.main.mode] || 'On to ') + W.dest(nm);
   const ph = shownPhotos(W, t)[0], lt = $('#latest');
   if (ph) {
     lt.hidden = false;
