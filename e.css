@@ -231,3 +231,8 @@ body.galopen{overflow:hidden}
 .pgroup{margin:34px 0 12px}
 .card h3 + .pgroup{margin-top:0}
 .prints span:empty{display:none}
+
+.lightbox .nav{position:fixed;top:50%;transform:translateY(-50%);background:none;border:0;font:300 44px/1 var(--serif);color:var(--ink);padding:16px 18px;cursor:pointer;opacity:.55;z-index:2}
+.lightbox .nav:hover{opacity:1}
+.lightbox .prev{left:8px}.lightbox .next{right:8px}
+@media (max-width:600px){.lightbox .nav{display:none}}
