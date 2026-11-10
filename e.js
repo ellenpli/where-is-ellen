@@ -33,16 +33,9 @@ function tick() {
   const nm = W.nextMove(st.phase === 'moving' && st.move ? st.move.t1 : t);
   $('#nextrow').hidden = !nm;
   if (nm) $('#nextsay').textContent = ({ flight: 'Flight to ', ferry: 'Boat to ', train: 'Train to ' }[nm.main.mode] || 'On to ') + W.dest(nm);
-  const ph = shownPhotos(W, t)[0], lt = $('#latest');
-  if (ph) {
-    lt.hidden = false;
-    if (lt.dataset.id !== ph.id) { lt.dataset.id = ph.id; photoSrc(ph).then(s => lt.querySelector('img').src = s); }
-    const l = W.leg(ph.leg); $('#latestcap').textContent = ph.caption + (l ? ' · ' + l.place : '');
-    $('#latestbtn').onclick = () => openLightbox(shownPhotos(W, CLOCK.now()), 0);
-  } else lt.hidden = true;
   const allN = shownPhotos(W, t).length;
-  $('#allphrow').hidden = !allN;
-  if (allN) { $('#allph').textContent = 'All photos (' + allN + ') \u2192'; $('#allph').onclick = openGallery; }
+  $('#allph').hidden = !allN;
+  if (allN) { $('#allph').textContent = 'Photos (' + allN + ')'; $('#allph').onclick = openGallery; }
   $('#line').style.setProperty('--p', linePos(t).toFixed(4));
   $('#fine').textContent = (CLOCK.simulated ? 'Simulated time: ' + dayLabel(dayKey(t)) + ', ' + clk(t) + ' in Tokyo. ' : '') + 'Where Ellen is comes from her itinerary, not GPS.';
   renderLine(); if (E.mode === 'map') renderDock();
@@ -104,7 +97,7 @@ async function enterMap(i) {
     stage.classList.add('full'); void stage.offsetWidth; stage.classList.add('fly');
     Object.assign(stage.style, { top: '0px', left: '0px', width: innerWidth + 'px', height: innerHeight + 'px' });
     resizeFor(760);
-    $('#dock').hidden = false; interactive(true);
+    $('#dock').hidden = false; syncDock(); interactive(true);
     await sleep(720); stage.classList.remove('fly'); Object.assign(stage.style, { width: '100vw', height: '100vh' }); E.map && E.map.resize();
   }
   go(i);
@@ -183,10 +176,12 @@ function timeFor(line, k, l) {
 function itineraryHtml(l, t) {
   /* one list per day, only what is real: bookings (with times), places she ticked (with her note), and when she leaves */
   const W = E.W, today = dayKey(t), went = shownPicks(W, t, l.id).filter(p => p.went && p.wentOn), rows = [], used = new Set();
-  W.events.filter(e => e.booked && l.days.includes(e.date)).forEach(e => {
-    const p = went.find(p => !used.has(p.id) && p.wentOn === e.date && ((e.ll && haversine(e.ll, p.ll) < 0.6) || WORDS(e.title).some(w => WORDS(p.name).includes(w))));
+  /* a booking belongs to a stop only if the booking is AT that stop (its location matches the stay), never by name similarity */
+  W.events.filter(e => e.booked && e.date >= l.inKey && e.date <= l.outKey).forEach(e => {
+    const atThisStop = e.ll && haversine(e.ll, l.ll) < 60;
+    const p = atThisStop ? went.find(p => !used.has(p.id) && p.wentOn === e.date && e.ll && haversine(e.ll, p.ll) < 0.6) : null;
     if (p) used.add(p.id);
-    rows.push({ k: e.date, at: ms(e.start), p, text: e.title });
+    if (atThisStop) rows.push({ k: e.date, at: ms(e.start), p, text: e.title });
   });
   went.filter(p => !used.has(p.id)).forEach(p => rows.push({ k: p.wentOn, at: null, p }));
   const out = l.i < W.legs.length - 1 ? W.moves.find(m => m.major && m.leg === W.legs[l.i + 1]) : W.moves.filter(m => m.major && !m.leg && m.t0 >= l.t0).pop();
@@ -217,7 +212,13 @@ function renderCard(l) {
   h += travelHtml(l, t);
   if (l.blurb) h += '<p class="blurb">' + esc(l.blurb) + '</p>';
   h += itineraryHtml(l, t);
-  h += '<h3>Photos</h3>' + (ph.length ? '<div class="prints">' + ph.map((p, j) => '<button type="button" data-ph="' + j + '"><img alt=""><span>' + esc([p.caption, p.place].filter(Boolean).join(' · ')) + '</span></button>').join('') + '</div>' : '<p class="empty">' + (t < l.t0 ? 'Not there yet.' : 'None shared from here yet.') + '</p>');
+  /* photos grouped by place, each group in capture order; loose photos after */
+  const groups = [];
+  ph.forEach(p => { let g = groups.find(g => g.name === (p.place || '')); if (!g) { g = { name: p.place || '', items: [] }; groups.push(g); } g.items.push(p); });
+  groups.sort((a, b) => (a.name === '') - (b.name === '') || (b.items.length - a.items.length));
+  const ordered = groups.flatMap(g => g.items);
+  h += '<h3>Photos</h3>' + (ordered.length ? groups.map(g => (g.name && groups.length > 1 ? '<p class="pgroup">' + esc(g.name) + '</p>' : '') + '<div class="prints">' + g.items.map(p => { const j = ordered.indexOf(p); return '<button type="button" data-ph="' + j + '"><img alt=""><span>' + esc([p.caption, p.place].filter(Boolean).join(' \u00b7 ')) + '</span></button>'; }).join('') + '</div>').join('') : '<p class="empty">' + (t < l.t0 ? 'Not there yet.' : 'None shared from here yet.') + '</p>');
+  const ph2 = ordered;
   /* places she went live in the itinerary now (with her note); no separate Places list */
   h += '</div>';
   const c = $('#card'); c.hidden = false; c.innerHTML = h; c.scrollTop = 0; c.classList.toggle('tall', E.tall);
@@ -274,7 +275,12 @@ async function openPlace(p) {
   c.querySelector('[data-back]').onclick = () => { clearSpot(); renderCard(l); flyTo(E.map, { center: l.ll, zoom: l.place === 'Tokyo' ? 11 : 11.6, pitch: 50, bearing: -12, padding: pads(), duration: 1200 }); };
   c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); };
   c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
-  wirePrints(c, ph);
+  wirePrints(c, ph2);
   const ci = c.querySelector('.pcover img'); if (ci) { photoSrc(cov).then(s => ci.src = s); c.querySelector('.pcover').onclick = () => openLightbox(phAll, phAll.indexOf(cov)); }
   showSpot(p);
 }
+
+/* the stop card ends exactly where the dock begins, whatever height the dock has */
+function syncDock() { const d = document.getElementById('dock'); document.documentElement.style.setProperty('--dockh', d.offsetHeight + 'px'); }
+if (window.ResizeObserver) new ResizeObserver(syncDock).observe(document.getElementById('dock'));
+addEventListener('resize', syncDock);

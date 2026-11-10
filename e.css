@@ -20,10 +20,10 @@ body.fe{background:var(--bg);color:var(--ink);font-family:var(--serif);min-heigh
 .say{font-size:20px;line-height:1.45;margin:18px 0 0}
 .next{display:flex;gap:16px;align-items:baseline;font-size:16px;line-height:1.45;color:var(--ink2);margin:34px 0 0;padding-top:16px;border-top:1px solid var(--rule)}
 .next .lab{color:var(--blue);flex:none}
-.latest{margin:40px 0 0;max-width:360px}
+.latest{margin:34px 0 0;max-width:520px}
 .latest button{display:block;width:100%}
-.latest img{width:100%;aspect-ratio:4/3;object-fit:cover}
-.latest figcaption{font-size:13px;line-height:1.45;color:var(--ink2);margin-top:8px}
+.latest img{width:100%;aspect-ratio:3/2;object-fit:cover}
+.latest figcaption{display:none}
 /* the map plate (opens into the full map) */
 .port{position:relative}
 .port .slot{position:relative;width:100%;aspect-ratio:4/5}
@@ -78,7 +78,7 @@ body.mapmode .legend{display:flex}
 .dnow{display:none;font-size:16px;flex:1;text-align:center;color:var(--ink)}
 .playb{font-size:15px;color:var(--bg);background:var(--blue);padding:9px 16px;flex:none}
 /* the stop page: blue cover, cream body, hairline rows */
-.card{position:fixed;z-index:30;top:0;right:0;bottom:57px;width:min(460px,40vw);overflow:auto;background:var(--bg);color:var(--ink);border-left:1px solid var(--rule);animation:slide .4s cubic-bezier(.2,.8,.2,1)}
+.card{position:fixed;z-index:30;top:0;right:0;bottom:var(--dockh,57px);width:min(460px,40vw);overflow:auto;background:var(--bg);color:var(--ink);border-left:1px solid var(--rule);animation:slide .4s cubic-bezier(.2,.8,.2,1)}
 @keyframes slide{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
 .card .cover{background:var(--blue);color:#fff;padding:18px 28px 26px;min-height:200px;display:flex;flex-direction:column}
 .card .ctop{display:flex;justify-content:space-between;align-items:center}
@@ -198,8 +198,8 @@ body.mapmode .legend{display:flex}
 .pfacts a{color:var(--blue);text-decoration:none}.pfacts a:hover{text-decoration:underline;text-underline-offset:3px}
 @media (max-width:820px){.card .phead{padding:10px 20px 14px}.card .phead h2{font-size:30px;padding-top:14px}}
 /* all photos: a cream page over everything, a section per stop */
-.allph{margin:22px 0 0;font-size:16px}.allph button{color:var(--blue)}
-.allph button:hover{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.allph{font:15px var(--serif);color:var(--blue);margin-right:22px}
+.allph:hover{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
 .gallery{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto}
 .ghead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:20px 40px 16px;border-bottom:1px solid var(--rule);background:var(--bg)}
 .ghead .tag{font-size:20px;color:var(--blue)}
@@ -226,3 +226,6 @@ body.galopen{overflow:hidden}
 .prints button.vid:before{content:"";position:absolute;left:calc(50% - 5px);top:calc(37.5% - 9px);border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent;z-index:2}
 .lightbox video{max-height:78vh;max-width:92vw;margin:0 auto;display:block}
 .plb video{max-width:92vw;max-height:88vh}
+.pgroup{font-size:15px;line-height:1.3;color:var(--blue);margin:26px 0 12px}
+.prints:first-of-type{margin-top:14px}
+.pgroup + .prints:first-of-type{margin-top:0}
