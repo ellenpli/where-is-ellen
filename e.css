@@ -229,5 +229,5 @@ body.galopen{overflow:hidden}
 .pgroup{font-size:15px;line-height:1.3;color:var(--blue)}
 .prints + .prints{margin-top:22px}
 .pgroup{margin:34px 0 12px}
-.pgroup:first-of-type,.card h3 + .pgroup{margin-top:0}
+.card h3 + .pgroup{margin-top:0}
 .prints span:empty{display:none}
