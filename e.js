@@ -212,28 +212,36 @@ function renderCard(l) {
   h += travelHtml(l, t);
   if (l.blurb) h += '<p class="blurb">' + esc(l.blurb) + '</p>';
   h += itineraryHtml(l, t);
-  /* photos grouped by place, each group in capture order; loose photos after */
-  const groups = [];
-  ph.forEach(p => { let g = groups.find(g => g.name === (p.place || '')); if (!g) { g = { name: p.place || '', items: [] }; groups.push(g); } g.items.push(p); });
-  groups.sort((a, b) => (a.name === '') - (b.name === '') || (b.items.length - a.items.length));
-  const ordered = groups.flatMap(g => g.items);
-  h += '<h3>Photos</h3>' + (ordered.length ? groups.map(g => (g.name && groups.length > 1 ? '<p class="pgroup">' + esc(g.name) + '</p>' : '') + '<div class="prints">' + g.items.map(p => { const j = ordered.indexOf(p); return '<button type="button" data-ph="' + j + '"><img alt=""><span>' + esc([p.caption, p.place].filter(Boolean).join(' \u00b7 ')) + '</span></button>'; }).join('') + '</div>').join('') : '<p class="empty">' + (t < l.t0 ? 'Not there yet.' : 'None shared from here yet.') + '</p>');
-  const ph2 = ordered;
+  /* oldest first by when each photo was taken; a place's photos sit together, at the time of its first one */
+  const groups = photoGroups(ph), ordered = groups.flatMap(g => g.items);
+  h += '<h3>Photos</h3>' + (ordered.length ? groups.map(g => (g.name && groups.length > 1 ? '<p class="pgroup">' + esc(g.name) + '</p>' : '') + '<div class="prints">' + g.items.map(p => { const j = ordered.indexOf(p); return '<button type="button" data-ph="' + j + '"><img alt=""><span>' + esc(groups.length > 1 && p.place ? (p.caption || '') : [p.caption, p.place].filter(Boolean).join(' \u00b7 ')) + '</span></button>'; }).join('') + '</div>').join('') : '<p class="empty">' + (t < l.t0 ? 'Not there yet.' : 'None shared from here yet.') + '</p>');
   /* places she went live in the itinerary now (with her note); no separate Places list */
   h += '</div>';
   const c = $('#card'); c.hidden = false; c.innerHTML = h; c.scrollTop = 0; c.classList.toggle('tall', E.tall);
   c.style.animation = 'none'; void c.offsetWidth; c.style.animation = '';
   c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); if (E.map) flyTo(E.map, { center: l.ll, zoom: E.map.getZoom(), padding: pads(), duration: 600 }); };
   c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
-  wirePrints(c, ph);
+  wirePrints(c, ordered);
   $$('[data-pk]', c).forEach(b => b.onclick = () => { const p = pk.find(x => x.id === b.dataset.pk); if (p) openPlace(p); });
 }
-/* ---------- every photo, grouped by stop, oldest first ---------- */
+/* oldest first by when each photo was taken; photos of one place sit together, at the time of the first one */
+function photoGroups(list) {
+  const groups = [];
+  list.slice().sort((a, b) => ms(a.date || 0) - ms(b.date || 0)).forEach(p => {
+    const name = p.place || '', last = groups[groups.length - 1];
+    let g = name ? groups.find(x => x.name === name) : (last && last.name === '' ? last : null);
+    if (!g) { g = { name, items: [] }; groups.push(g); }
+    g.items.push(p);
+  });
+  return groups;
+}
+/* ---------- every photo, grouped by stop, oldest first, a place's photos together ---------- */
 function openGallery() {
-  const W = E.W, t = CLOCK.now(), all = shownPhotos(W, t).slice().reverse();
+  const W = E.W, t = CLOCK.now(), shown = shownPhotos(W, t);
+  const secs = W.legs.map(l => ({ l, ph: photoGroups(shown.filter(p => p.leg === l.id)).flatMap(g => g.items) })).filter(s => s.ph.length);
+  const all = secs.flatMap(s => s.ph);
   let h = '<header class="ghead"><span class="tag">Photos</span><button type="button" class="gx" aria-label="Close">\u00d7</button></header><div class="gbody">';
-  W.legs.forEach(l => {
-    const ph = all.filter(p => p.leg === l.id); if (!ph.length) return;
+  secs.forEach(({ l, ph }) => {
     h += '<section><h3>' + esc(l.place) + '<span>' + rangeText(l) + '</span></h3><div class="ggrid">' + ph.map(p => '<button type="button" data-g="' + all.indexOf(p) + '"><img alt=""><span>' + esc([p.caption, p.place].filter(Boolean).join(' \u00b7 ')) + '</span></button>').join('') + '</div></section>';
   });
   const g = $('#gallery'); g.innerHTML = h + '</div>'; g.hidden = false; g.scrollTop = 0; document.body.classList.add('galopen');
@@ -258,7 +266,7 @@ const KIND = { food: 'Food', cafe: 'Coffee', bar: 'Bar', museum: 'Museum', archi
 async function openPlace(p) {
   const W = E.W, l = W.leg(p.leg) || W.legs[E.sel] || W.legs[0], t = CLOCK.now();
   if (E.mode !== 'map') await enterMap(l.i);
-  const phAll = shownPhotos(W, t, l.id).filter(x => x.place && x.place === p.name);
+  const phAll = shownPhotos(W, t, l.id).filter(x => x.place && x.place === p.name).sort((a, b) => ms(a.date || 0) - ms(b.date || 0));
   const cov = p.cover ? phAll.find(x => x.id === p.cover) : null;
   const ph = phAll.filter(x => x !== cov);
   let h = '<header class="phead"><span class="grab dark" data-grab></span><div class="ctop"><button type="button" class="pback" data-back>\u2190 ' + esc(l.place) + '</button><button type="button" class="x dark" data-x aria-label="Hide">\u00d7</button></div>';
@@ -275,7 +283,7 @@ async function openPlace(p) {
   c.querySelector('[data-back]').onclick = () => { clearSpot(); renderCard(l); flyTo(E.map, { center: l.ll, zoom: l.place === 'Tokyo' ? 11 : 11.6, pitch: 50, bearing: -12, padding: pads(), duration: 1200 }); };
   c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); };
   c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
-  wirePrints(c, ph2);
+  wirePrints(c, ph);
   const ci = c.querySelector('.pcover img'); if (ci) { photoSrc(cov).then(s => ci.src = s); c.querySelector('.pcover').onclick = () => openLightbox(phAll, phAll.indexOf(cov)); }
   showSpot(p);
 }
