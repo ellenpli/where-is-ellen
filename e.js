@@ -224,7 +224,7 @@ function renderCard(l) {
   c.style.animation = 'none'; void c.offsetWidth; c.style.animation = '';
   c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); if (E.map) flyTo(E.map, { center: l.ll, zoom: E.map.getZoom(), padding: pads(), duration: 600 }); };
   c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
-  $$('[data-ph]', c).forEach(b => { const p = ph[+b.dataset.ph]; photoSrc(p).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(ph, +b.dataset.ph); });
+  wirePrints(c, ph);
   $$('[data-pk]', c).forEach(b => b.onclick = () => { const p = pk.find(x => x.id === b.dataset.pk); if (p) openPlace(p); });
 }
 /* ---------- every photo, grouped by stop, oldest first ---------- */
@@ -240,17 +240,32 @@ function openGallery() {
   $$('[data-g]', g).forEach(b => { const p = all[+b.dataset.g]; photoSrc(p).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(all, +b.dataset.g); });
 }
 function closeGallery() { $('#gallery').hidden = true; document.body.classList.remove('galopen'); }
+
+/* photos and videos together: a poster with a play mark for videos, the lightbox plays them */
+function wirePrints(root, list) {
+  $$('[data-ph]', root).forEach(b => {
+    const p = list[+b.dataset.ph];
+    if (p.type === 'video') {
+      b.classList.add('vid');
+      if (p.poster) photoSrc({id: p.poster, media: 'media/' + p.poster + '.enc'}).then(s => b.querySelector('img').src = s);
+    } else photoSrc(p).then(s => b.querySelector('img').src = s);
+    b.onclick = () => openLightbox(list, +b.dataset.ph);
+  });
+}
 /* ---------- a place's own page, inside the stop card ---------- */
 const KIND = { food: 'Food', cafe: 'Coffee', bar: 'Bar', museum: 'Museum', architecture: 'Architecture', walk: 'Walk', garden: 'Garden', photo: 'Photo spot', shop: 'Shop', craft: 'Craft', onsen: 'Hot spring' };
 async function openPlace(p) {
   const W = E.W, l = W.leg(p.leg) || W.legs[E.sel] || W.legs[0], t = CLOCK.now();
   if (E.mode !== 'map') await enterMap(l.i);
-  const ph = shownPhotos(W, t, l.id).filter(x => x.place && x.place === p.name);
+  const phAll = shownPhotos(W, t, l.id).filter(x => x.place && x.place === p.name);
+  const cov = p.cover ? phAll.find(x => x.id === p.cover) : null;
+  const ph = phAll.filter(x => x !== cov);
   let h = '<header class="phead"><span class="grab dark" data-grab></span><div class="ctop"><button type="button" class="pback" data-back>\u2190 ' + esc(l.place) + '</button><button type="button" class="x dark" data-x aria-label="Hide">\u00d7</button></div>';
   h += '<h2>' + esc(p.name) + '</h2><p class="meta">' + [p.area, KIND[p.kind]].filter(Boolean).map(esc).join(' \u00b7 ') + '</p></header><div class="body">';
   if (p.went && p.wentOn) h += '<p class="pwent">Ellen went ' + dayLong(p.wentOn) + '.</p>';
   if (p.note) h += '<blockquote class="pnote">\u201c' + esc(p.note) + '\u201d</blockquote>';
   if (p.about) h += '<p class="blurb">' + esc(p.about) + '</p>';
+  if (cov) h += '<figure class="pcover"><img alt=""><figcaption>' + esc(cov.caption || p.name) + '</figcaption></figure>';
   if (ph.length) h += '<h3>Photos</h3><div class="prints">' + ph.map((x, j) => '<button type="button" data-ph="' + j + '"><img alt=""><span>' + esc(x.caption || '') + '</span></button>').join('') + '</div>';
   if (p.hours || p.url) h += '<div class="travel pfacts">' + (p.hours ? '<div class="lg"><div>Hours</div><span>' + esc(p.hours) + '</span></div>' : '') + (p.url ? '<div class="lg"><div>Website</div><span><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '')) + ' \u2197</a></span></div>' : '') + '</div>';
   h += '</div>';
@@ -259,6 +274,7 @@ async function openPlace(p) {
   c.querySelector('[data-back]').onclick = () => { clearSpot(); renderCard(l); flyTo(E.map, { center: l.ll, zoom: l.place === 'Tokyo' ? 11 : 11.6, pitch: 50, bearing: -12, padding: pads(), duration: 1200 }); };
   c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); };
   c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
-  $$('[data-ph]', c).forEach(b => { const x = ph[+b.dataset.ph]; photoSrc(x).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(ph, +b.dataset.ph); });
+  wirePrints(c, ph);
+  const ci = c.querySelector('.pcover img'); if (ci) { photoSrc(cov).then(s => ci.src = s); c.querySelector('.pcover').onclick = () => openLightbox(phAll, phAll.indexOf(cov)); }
   showSpot(p);
 }
