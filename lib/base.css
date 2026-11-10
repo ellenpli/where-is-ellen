@@ -14,8 +14,8 @@ body.locked>*:not(#gate){visibility:hidden}
 #gate form.nope{animation:nope .4s}
 @keyframes nope{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .lightbox{position:fixed;inset:0;z-index:60;background:rgba(20,18,16,.86);display:grid;place-items:center;padding:4vh 4vw}
-.lightbox figure{margin:0;max-width:min(1100px,92vw);color:#f3efe6}
-.lightbox img{max-height:78vh;width:auto;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.lightbox figure{margin:0;max-width:min(1100px,92vw);min-width:0;color:#f3efe6}
+.lightbox img{display:block;max-height:78vh;max-width:100%;width:auto;height:auto;object-fit:contain;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .lightbox figcaption{font:16px/1.4 "Iowan Old Style",Palatino,Georgia,serif;margin-top:14px;text-align:center}
 .lightbox figcaption small{display:block;font:11px/1.6 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-top:4px}
 .lightbox .x{position:absolute;top:14px;right:18px;color:#f3efe6;font:28px/1 system-ui;padding:8px}
