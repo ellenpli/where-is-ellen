@@ -246,7 +246,7 @@ function openGallery() {
   });
   const g = $('#gallery'); g.innerHTML = h + '</div>'; g.hidden = false; g.scrollTop = 0; document.body.classList.add('galopen');
   g.querySelector('.gx').onclick = closeGallery;
-  $$('[data-g]', g).forEach(b => { const p = all[+b.dataset.g]; photoSrc(p).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(all, +b.dataset.g); });
+  $$('[data-g]', g).forEach(b => { const p = all[+b.dataset.g]; thumbSrc(p).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(all, +b.dataset.g); });
 }
 function closeGallery() { $('#gallery').hidden = true; document.body.classList.remove('galopen'); }
 
@@ -257,7 +257,7 @@ function wirePrints(root, list) {
     if (p.type === 'video') {
       b.classList.add('vid');
       if (p.poster) photoSrc({id: p.poster, media: 'media/' + p.poster + '.enc'}).then(s => b.querySelector('img').src = s);
-    } else photoSrc(p).then(s => b.querySelector('img').src = s);
+    } else thumbSrc(p).then(s => b.querySelector('img').src = s);
     b.onclick = () => openLightbox(list, +b.dataset.ph);
   });
 }
@@ -284,7 +284,7 @@ async function openPlace(p) {
   c.querySelector('[data-x]').onclick = () => { c.hidden = true; clearSpot(); };
   c.querySelector('[data-grab]').onclick = () => { E.tall = !E.tall; c.classList.toggle('tall', E.tall); };
   wirePrints(c, ph);
-  const ci = c.querySelector('.pcover img'); if (ci) { photoSrc(cov).then(s => ci.src = s); c.querySelector('.pcover').onclick = () => openLightbox(phAll, phAll.indexOf(cov)); }
+  const ci = c.querySelector('.pcover img'); if (ci) { thumbSrc(cov).then(s => ci.src = s); c.querySelector('.pcover').onclick = () => openLightbox(phAll, phAll.indexOf(cov)); }
   showSpot(p);
 }
 
