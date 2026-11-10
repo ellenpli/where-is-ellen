@@ -17,6 +17,7 @@ bootFollow(async W => {
     if (e.key === 'ArrowRight') $('#next').click();
     if (e.key === 'ArrowLeft') $('#prev').click();
   });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#gallery').hidden && $('#lightbox').hidden) closeGallery(); });
   addEventListener('resize', () => { clearTimeout(E.rt); E.rt = setTimeout(() => { if (E.map) E.map.resize(); }, 200); });
   setInterval(tick, 30000);
   await loadStyle(FOLLOW.base);
@@ -39,6 +40,9 @@ function tick() {
     const l = W.leg(ph.leg); $('#latestcap').textContent = ph.caption + (l ? ' · ' + l.place : '');
     $('#latestbtn').onclick = () => openLightbox(shownPhotos(W, CLOCK.now()), 0);
   } else lt.hidden = true;
+  const allN = shownPhotos(W, t).length;
+  $('#allphrow').hidden = !allN;
+  if (allN) { $('#allph').textContent = 'All photos (' + allN + ') \u2192'; $('#allph').onclick = openGallery; }
   $('#line').style.setProperty('--p', linePos(t).toFixed(4));
   $('#fine').textContent = (CLOCK.simulated ? 'Simulated time: ' + dayLabel(dayKey(t)) + ', ' + clk(t) + ' in Tokyo. ' : '') + 'Where Ellen is comes from her itinerary, not GPS.';
   renderLine(); if (E.mode === 'map') renderDock();
@@ -217,6 +221,19 @@ function renderCard(l) {
   $$('[data-ph]', c).forEach(b => { const p = ph[+b.dataset.ph]; photoSrc(p).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(ph, +b.dataset.ph); });
   $$('[data-pk]', c).forEach(b => b.onclick = () => { const p = pk.find(x => x.id === b.dataset.pk); if (p) openPlace(p); });
 }
+/* ---------- every photo, grouped by stop, oldest first ---------- */
+function openGallery() {
+  const W = E.W, t = CLOCK.now(), all = shownPhotos(W, t).slice().reverse();
+  let h = '<header class="ghead"><span class="tag">Photos</span><button type="button" class="gx" aria-label="Close">\u00d7</button></header><div class="gbody">';
+  W.legs.forEach(l => {
+    const ph = all.filter(p => p.leg === l.id); if (!ph.length) return;
+    h += '<section><h3>' + esc(l.place) + '<span>' + rangeText(l) + '</span></h3><div class="ggrid">' + ph.map(p => '<button type="button" data-g="' + all.indexOf(p) + '"><img alt=""><span>' + esc([p.caption, p.place].filter(Boolean).join(' \u00b7 ')) + '</span></button>').join('') + '</div></section>';
+  });
+  const g = $('#gallery'); g.innerHTML = h + '</div>'; g.hidden = false; g.scrollTop = 0; document.body.classList.add('galopen');
+  g.querySelector('.gx').onclick = closeGallery;
+  $$('[data-g]', g).forEach(b => { const p = all[+b.dataset.g]; photoSrc(p).then(s => b.querySelector('img').src = s); b.onclick = () => openLightbox(all, +b.dataset.g); });
+}
+function closeGallery() { $('#gallery').hidden = true; document.body.classList.remove('galopen'); }
 /* ---------- a place's own page, inside the stop card ---------- */
 const KIND = { food: 'Food', cafe: 'Coffee', bar: 'Bar', museum: 'Museum', architecture: 'Architecture', walk: 'Walk', garden: 'Garden', photo: 'Photo spot', shop: 'Shop', craft: 'Craft', onsen: 'Hot spring' };
 async function openPlace(p) {

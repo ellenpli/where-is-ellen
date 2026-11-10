@@ -197,3 +197,19 @@ body.mapmode .legend{display:flex}
 .pfacts{margin-top:26px}
 .pfacts a{color:var(--blue);text-decoration:none}.pfacts a:hover{text-decoration:underline;text-underline-offset:3px}
 @media (max-width:820px){.card .phead{padding:10px 20px 14px}.card .phead h2{font-size:30px;padding-top:14px}}
+/* all photos: a cream page over everything, a section per stop */
+.allph{margin:22px 0 0;font-size:16px}.allph button{color:var(--blue)}
+.allph button:hover{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.gallery{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto}
+.ghead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:20px 40px 16px;border-bottom:1px solid var(--rule);background:var(--bg)}
+.ghead .tag{font-size:20px;color:var(--blue)}
+.gx{font-size:28px;line-height:1;color:var(--ink);padding:2px 4px}
+.gbody{max-width:1240px;margin:0 auto;padding:6px 40px 64px}
+.gallery h3{font-weight:400;font-size:28px;color:var(--blue);margin:40px 0 16px;display:flex;gap:14px;align-items:baseline}
+.gallery h3 span{font-size:15px;color:var(--ink2)}
+.ggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px 22px}
+.ggrid button{display:block;text-align:left}
+.ggrid img{width:100%;aspect-ratio:4/3;object-fit:cover;filter:saturate(.85);background:var(--bg2)}
+.ggrid span{display:block;font-size:13px;line-height:1.45;color:var(--ink2);margin-top:7px}
+body.galopen{overflow:hidden}
+@media (max-width:820px){.ghead{padding:14px 20px 12px}.gbody{padding:0 20px 40px}.gallery h3{font-size:24px;margin-top:30px}.ggrid{grid-template-columns:1fr 1fr;gap:18px 12px}}
