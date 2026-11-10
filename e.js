@@ -181,18 +181,24 @@ function timeFor(line, k, l) {
   return s ? s.t0 : null;
 }
 function itineraryHtml(l, t) {
-  const W = E.W, today = dayKey(t), days = W.dayLines(l).filter(d => d.lines.length);
-  /* places she ticked as "went" join the day she went */
-  const went = shownPicks(W, t, l.id).filter(p => p.went && p.wentOn);
-  went.forEach(p => { if (!days.some(d => d.k === p.wentOn)) days.push({ k: p.wentOn, lines: [] }); });
-  days.sort((a, b) => a.k.localeCompare(b.k));
-  if (!days.length && !(l.plans && l.plans.length)) return '';
-  let h = '<h3>Itinerary</h3><div class="itin">';
-  days.forEach(d => {
-    const rows = d.lines.map(x => ({ x, at: timeFor(x, d.k, l) })).concat(went.filter(p => p.wentOn === d.k).map(p => ({ x: 'Went to ' + p.name, at: null, pk: p.id })));
-    h += '<div class="iday' + (d.k === today ? ' today' : '') + (d.k < today ? ' past' : '') + '"><p class="idate">' + dayLong(d.k) + (d.k === today ? ' · today' : '') + '</p>' + rows.map(r => '<div class="irow"><span class="itime">' + (r.at ? clk(r.at) : '') + '</span>' + (r.pk ? '<button type="button" class="iwent" data-pk="' + esc(r.pk) + '">' + esc(r.x) + '</button>' : '<span>' + esc(r.x) + '</span>') + '</div>').join('') + '</div>';
+  /* one list per day, only what is real: bookings (with times), places she ticked (with her note), and when she leaves */
+  const W = E.W, today = dayKey(t), went = shownPicks(W, t, l.id).filter(p => p.went && p.wentOn), rows = [], used = new Set();
+  W.events.filter(e => e.booked && l.days.includes(e.date)).forEach(e => {
+    const p = went.find(p => !used.has(p.id) && p.wentOn === e.date && ((e.ll && haversine(e.ll, p.ll) < 0.6) || WORDS(e.title).some(w => WORDS(p.name).includes(w))));
+    if (p) used.add(p.id);
+    rows.push({ k: e.date, at: ms(e.start), p, text: e.title });
   });
-  if (l.plans && l.plans.length) h += '<div class="iday"><p class="idate">Also planned</p>' + l.plans.map(p => '<div class="irow"><span class="itime"></span><span>' + esc(p) + '</span></div>').join('') + '</div>';
+  went.filter(p => !used.has(p.id)).forEach(p => rows.push({ k: p.wentOn, at: null, p }));
+  const out = l.i < W.legs.length - 1 ? W.moves.find(m => m.major && m.leg === W.legs[l.i + 1]) : W.moves.filter(m => m.major && !m.leg && m.t0 >= l.t0).pop();
+  const ds = out && out.steps.find(x => ['flight', 'ferry', 'train'].includes(x.mode));
+  if (ds && l.days.includes(dayKey(ds.t0))) rows.push({ k: dayKey(ds.t0), at: ds.t0, text: out.leg ? 'Leaves for ' + out.leg.place : 'Flight home to New York' });
+  if (!rows.length) return '';
+  const days = [...new Set(rows.map(r => r.k))].sort();
+  let h = '<h3>Itinerary</h3><div class="itin">';
+  days.forEach(k => {
+    const dr = rows.filter(r => r.k === k).sort((a, b) => (a.at == null) - (b.at == null) || (a.at || 0) - (b.at || 0));
+    h += '<div class="iday' + (k === today ? ' today' : '') + (k < today ? ' past' : '') + '"><p class="idate">' + dayLong(k) + (k === today ? ' \u00b7 today' : '') + '</p>' + dr.map(r => '<div class="irow"><span class="itime">' + (r.at ? clk(r.at) : '') + '</span><div>' + (r.p ? '<button type="button" class="iwent" data-pk="' + esc(r.p.id) + '">' + esc(r.p.name) + '</button>' + (r.p.note ? '<small>' + esc(r.p.note) + '</small>' : '') : '<span>' + esc(r.text) + '</span>') + '</div></div>').join('') + '</div>';
+  });
   return h + '</div>';
 }
 function renderCard(l) {
@@ -209,10 +215,10 @@ function renderCard(l) {
   let h = '<header class="cover"><span class="grab" data-grab></span><div class="ctop">' + status + '<button type="button" class="x" data-x aria-label="Hide">×</button></div><h2>' + esc(l.place) + '</h2></header><div class="body">';
   h += '<p class="meta">' + esc(l.hotel) + ' · ' + rangeText(l) + ' · ' + nightsText(l) + '</p>';
   h += travelHtml(l, t);
-  h += '<p class="blurb">' + esc(l.blurb) + '</p>';
+  if (l.blurb) h += '<p class="blurb">' + esc(l.blurb) + '</p>';
   h += itineraryHtml(l, t);
   h += '<h3>Photos</h3>' + (ph.length ? '<div class="prints">' + ph.map((p, j) => '<button type="button" data-ph="' + j + '"><img alt=""><span>' + esc([p.caption, p.place].filter(Boolean).join(' · ')) + '</span></button>').join('') + '</div>' : '<p class="empty">' + (t < l.t0 ? 'Not there yet.' : 'None shared from here yet.') + '</p>');
-  if (pk.length) h += '<h3>Places</h3><ul class="places">' + pk.map(p => '<li><button type="button" data-pk="' + esc(p.id) + '"><span class="nm">' + esc(p.name) + '</span>' + (p.area ? '<span class="ar">' + esc(p.area) + '</span>' : '') + (p.went && p.wentOn ? '<span class="ar">· went ' + dayLabel(p.wentOn) + '</span>' : '') + (p.note ? '<small>' + esc(p.note) + '</small>' : '') + '</button></li>').join('') + '</ul>';
+  /* places she went live in the itinerary now (with her note); no separate Places list */
   h += '</div>';
   const c = $('#card'); c.hidden = false; c.innerHTML = h; c.scrollTop = 0; c.classList.toggle('tall', E.tall);
   c.style.animation = 'none'; void c.offsetWidth; c.style.animation = '';
